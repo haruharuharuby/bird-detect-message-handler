@@ -1,0 +1,28 @@
+service: bird-detect-iot
+
+custom:
+  stage: ${opt:stage, 'dev'}
+  iot:
+    topicFilter: ${ssm:bird-detection-topic-filter}
+  alexa:
+    clientId: ${ssm:bird-detection-client-id}
+    clientSecret: ${ssm:bird-detection-client-secret}
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+
+functions:
+  hello:
+    handler: birdDetectIot.handler
+    events:
+      - iot:
+          name: 'birdDetection'
+          sql: "select bird from '${self:custom.iot.topicFilter}' where bird > 0.800"
+    environment:
+      STAGE: ${self:custom.stage}
+      CLIENT_ID: ${self:custom.alexa.clientId}
+      CLIENT_SECRET: ${self:custom.alexa.clientSecret}
+      PROACTIVE_AUTH_ENDPOINT: https://api.amazon.com
+      PROACTIVE_EVENT_ENDPOINT: https://api.amazonalexa.com
+
