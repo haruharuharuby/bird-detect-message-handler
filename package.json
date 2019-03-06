@@ -1,8 +1,8 @@
 {
-  "name": "bird-detect-iot",
+  "name": "bird-detect-message-handler",
   "version": "1.0.0",
   "description": "",
-  "main": "birdDetectIot.js",
+  "main": "handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.18.0",
+    "moment": "^2.24.0",
     "querystring": "^0.2.0"
   }
 }

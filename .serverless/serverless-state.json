@@ -1,0 +1,295 @@
+{
+  "service": {
+    "service": "bird-detect-message-handler",
+    "serviceObject": {
+      "name": "bird-detect-message-handler"
+    },
+    "provider": {
+      "stage": "dev",
+      "region": "us-east-1",
+      "variableSyntax": "\\${([ ~:a-zA-Z0-9._'\",\\-\\/\\(\\)]+?)}",
+      "name": "aws",
+      "runtime": "nodejs8.10",
+      "versionFunctions": true,
+      "remoteFunctionData": null,
+      "compiledCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket"
+          },
+          "HelloLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/bird-detect-message-handler-dev-hello"
+            }
+          },
+          "IamRoleLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
+              },
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "bird-detect-message-handler",
+                        "lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:CreateLogStream"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/bird-detect-message-handler-dev-hello:*"
+                          }
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Action": [
+                          "logs:PutLogEvents"
+                        ],
+                        "Resource": [
+                          {
+                            "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/bird-detect-message-handler-dev-hello:*:*"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ],
+              "Path": "/",
+              "RoleName": {
+                "Fn::Join": [
+                  "-",
+                  [
+                    "bird-detect-message-handler",
+                    "dev",
+                    "us-east-1",
+                    "lambdaRole"
+                  ]
+                ]
+              }
+            }
+          },
+          "HelloLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/bird-detect-message-handler/dev/1551902569911-2019-03-06T20:02:49.911Z/bird-detect-message-handler.zip"
+              },
+              "FunctionName": "bird-detect-message-handler-dev-hello",
+              "Handler": "handler.handler",
+              "MemorySize": 1024,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              },
+              "Runtime": "nodejs8.10",
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "STAGE": "dev",
+                  "CLIENT_ID": "amzn1.application-oa2-client.9b207d535b5540e5b9f00ae914c3fab5",
+                  "CLIENT_SECRET": "e8e2868952f2790de165913587013f4c25bb0d0d5ea3714da8834ac5dfb7a364",
+                  "PROACTIVE_AUTH_ENDPOINT": "https://api.amazon.com",
+                  "PROACTIVE_EVENT_ENDPOINT": "https://api.amazonalexa.com",
+                  "ALEXA_NOTIFICATION_EXPIRY_MINUTES": 10
+                }
+              }
+            },
+            "DependsOn": [
+              "HelloLogGroup",
+              "IamRoleLambdaExecution"
+            ]
+          },
+          "HelloLambdaVersionSL5Ko0TwUvV1m1ak3wJFJw8wNwrp87wZoWX0l5XtcKk": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "HelloLambdaFunction"
+              },
+              "CodeSha256": "U42QyGPSI3ktQsuuxhzYB9/+Si4QKBPdoBp4ZJSPyos="
+            }
+          },
+          "HelloIotTopicRule1": {
+            "Type": "AWS::IoT::TopicRule",
+            "Properties": {
+              "RuleName": "birdDetection",
+              "TopicRulePayload": {
+                "RuleDisabled": "false",
+                "Sql": "select bird from '$aws/things/deeplens_9ADMLp-JR7OzBXEAnjUmjQ/infer' where bird > 0.800",
+                "Actions": [
+                  {
+                    "Lambda": {
+                      "FunctionArn": {
+                        "Fn::GetAtt": [
+                          "HelloLambdaFunction",
+                          "Arn"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "HelloLambdaPermissionIotTopicRule1": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "HelloLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "iot.",
+                    {
+                      "Ref": "AWS::URLSuffix"
+                    }
+                  ]
+                ]
+              },
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":iot:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":rule/",
+                    {
+                      "Ref": "HelloIotTopicRule1"
+                    }
+                  ]
+                ]
+              }
+            }
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          },
+          "HelloLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "HelloLambdaVersionSL5Ko0TwUvV1m1ak3wJFJw8wNwrp87wZoWX0l5XtcKk"
+            }
+          }
+        }
+      },
+      "coreCloudFormationTemplate": {
+        "AWSTemplateFormatVersion": "2010-09-09",
+        "Description": "The AWS CloudFormation template for this Serverless application",
+        "Resources": {
+          "ServerlessDeploymentBucket": {
+            "Type": "AWS::S3::Bucket"
+          }
+        },
+        "Outputs": {
+          "ServerlessDeploymentBucketName": {
+            "Value": {
+              "Ref": "ServerlessDeploymentBucket"
+            }
+          }
+        }
+      },
+      "vpc": {}
+    },
+    "custom": {
+      "stage": "dev",
+      "iot": {
+        "topicFilter": "$aws/things/deeplens_9ADMLp-JR7OzBXEAnjUmjQ/infer"
+      },
+      "alexa": {
+        "clientId": "amzn1.application-oa2-client.9b207d535b5540e5b9f00ae914c3fab5",
+        "clientSecret": "e8e2868952f2790de165913587013f4c25bb0d0d5ea3714da8834ac5dfb7a364",
+        "notificationExpiryMinutes": 10
+      }
+    },
+    "pluginsData": {},
+    "functions": {
+      "hello": {
+        "handler": "handler.handler",
+        "events": [
+          {
+            "iot": {
+              "name": "birdDetection",
+              "sql": "select bird from '$aws/things/deeplens_9ADMLp-JR7OzBXEAnjUmjQ/infer' where bird > 0.800"
+            }
+          }
+        ],
+        "environment": {
+          "STAGE": "dev",
+          "CLIENT_ID": "amzn1.application-oa2-client.9b207d535b5540e5b9f00ae914c3fab5",
+          "CLIENT_SECRET": "e8e2868952f2790de165913587013f4c25bb0d0d5ea3714da8834ac5dfb7a364",
+          "PROACTIVE_AUTH_ENDPOINT": "https://api.amazon.com",
+          "PROACTIVE_EVENT_ENDPOINT": "https://api.amazonalexa.com",
+          "ALEXA_NOTIFICATION_EXPIRY_MINUTES": 10
+        },
+        "name": "bird-detect-message-handler-dev-hello",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs8.10",
+        "vpc": {}
+      }
+    },
+    "layers": {},
+    "artifact": "/Users/tomoharuitoh/hugtech/bird-detect-message-handler/.serverless/bird-detect-message-handler.zip"
+  },
+  "package": {
+    "artifactDirectoryName": "serverless/bird-detect-message-handler/dev/1551902569911-2019-03-06T20:02:49.911Z",
+    "artifact": "bird-detect-message-handler.zip"
+  }
+}
